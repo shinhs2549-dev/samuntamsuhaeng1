@@ -81,6 +81,15 @@
   }
   textarea:focus, input.fill:focus { background: #fffbe6; }
   input.fill { height: 100%; }
+
+  /* 분량에 따라 칸이 자동으로 늘어남: 같은 글을 보이지 않게 복제(::after)해 두고 그 높이를 따라감 */
+  .grow { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .grow::after {
+    content: attr(data-v) " "; grid-area: 1 / 1; min-width: 0;
+    white-space: pre-wrap; overflow-wrap: break-word; word-break: normal;
+    visibility: hidden; font: inherit; line-height: 1.6; padding: 2mm 2.5mm;
+  }
+  .grow > textarea { grid-area: 1 / 1; min-width: 0; }
   textarea.s  { min-height: 12mm; }
   textarea.m  { min-height: 30mm; }
   textarea.l  { min-height: 45mm; }
@@ -100,6 +109,10 @@
   @media print {
     html, body { background: #fff; }
     .toolbar, .warn { display: none !important; }
+    .grow > textarea { visibility: hidden; }
+    .grow::after { visibility: visible; color: #111; }
+    table.box tr { break-inside: avoid; }
+    h2 { break-after: avoid; }
     .page { margin: 0; width: auto; min-height: 0; padding: 14mm 15mm 12mm; }
     textarea:focus, input.fill:focus { background: transparent; }
     .topics input { transform: none; }
@@ -210,6 +223,11 @@
   var KEY = 'seongbulpyeongdeung_suhaengpyeongga_v1';
   var fields = Array.prototype.slice.call(document.querySelectorAll('[data-f]'));
   var radios = Array.prototype.slice.call(document.querySelectorAll('input[name="topic"]'));
+  fields.forEach(function (el) {
+    if (el.tagName !== 'TEXTAREA') return;
+    var w = document.createElement('div'); w.className = 'grow';
+    el.parentNode.insertBefore(w, el); w.appendChild(el);
+  });
   var msg = document.getElementById('msg');
   var data = {};
   var storageOK = true;
@@ -238,8 +256,7 @@
 
   function grow(el) {
     if (el.tagName !== 'TEXTAREA') return;
-    el.style.height = 'auto';
-    el.style.height = (el.scrollHeight + 2) + 'px';
+    el.parentNode.setAttribute('data-v', el.value);
   }
   function growAll() { fields.forEach(grow); }
 
